@@ -1,1 +1,210 @@
-<!doctype html><html lang='ko'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Bell Percent</title><link rel='manifest' href='manifest.json'><style>body{font-family:Arial;max-width:480px;margin:auto;padding:20px}input{width:100%;padding:10px;margin:6px 0;font-size:18px}.r{font-size:24px;color:green;font-weight:bold}</style><h1>% 계산기</h1><h2>%CHG</h2><input id=old placeholder='이전값' type=number><input id=newv placeholder='현재값' type=number><div id=cr class=r></div><h2>%TOTL</h2><input id=part placeholder='부분' type=number><input id=tot placeholder='전체' type=number><div id=tr class=r></div><script>function c(){let o=+old.value,n=+newv.value;if(o)cr.textContent=(((n-o)/o)*100).toFixed(2)+' %';else cr.textContent='';let p=+part.value,t=+tot.value;if(t)tr.textContent=((p/t)*100).toFixed(2)+' %';else tr.textContent='';}document.querySelectorAll('input').forEach(i=>i.oninput=c);if('serviceWorker'in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}</script></html>
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>HP계산 V7</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:Arial,"Noto Sans KR",sans-serif;
+  background:#121821;
+  color:#f5f0df;
+  padding:14px;
+}
+.app{max-width:520px;margin:auto}
+.shell{
+  background:linear-gradient(180deg,#343d4d,#202938);
+  border:2px solid #7b8492;
+  border-radius:24px;
+  padding:16px;
+  box-shadow:0 12px 30px rgba(0,0,0,.45);
+}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.brand{font-size:26px;font-weight:900;color:#facc15}
+.ver{font-size:12px;color:#cbd5e1;background:#111827;padding:5px 10px;border-radius:99px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.tab{border:0;border-radius:14px;padding:12px;font-size:18px;font-weight:900;background:#475569;color:#e5e7eb}
+.tab.active{background:#b45309;color:white}
+.panel{display:none}.panel.active{display:block}
+.card{background:#111827;border:1px solid #4b5563;border-radius:18px;padding:14px}
+.title{font-size:22px;font-weight:900;color:#93c5fd;margin-bottom:8px}
+.label{font-size:13px;color:#d1d5db;font-weight:900;margin-top:11px;margin-bottom:4px}
+input{
+  width:100%;height:56px;border-radius:13px;border:2px solid #9ca3af;
+  background:#f8fafc;color:#111827;font-size:28px;text-align:right;
+  padding:8px 12px;font-weight:800;
+}
+input:focus{outline:none;border-color:#facc15;box-shadow:0 0 0 3px rgba(250,204,21,.25)}
+.result{
+  min-height:58px;background:#020617;border:1px solid #334155;border-radius:14px;
+  color:#86efac;font-size:21px;line-height:1.35;text-align:right;padding:12px;margin-top:13px;
+}
+.btnrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+button{border:0;border-radius:13px;height:44px;font-size:15px;font-weight:900;color:white;background:#475569}
+.copy{background:#166534}.clear{background:#7f1d1d}.next{background:#92400e}
+.help{font-size:13px;color:#cbd5e1;line-height:1.45;margin-top:9px}
+.history{margin-top:13px;background:#020617;border:1px solid #334155;border-radius:16px;padding:11px}
+.hhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.hhead b{color:#facc15}
+.hclear{height:32px;font-size:12px;padding:0 10px;background:#7f1d1d}
+.item{border-top:1px solid #334155;padding:8px 0;font-size:14px;line-height:1.35}
+.item:first-of-type{border-top:0}
+.badge{display:inline-block;background:#334155;color:#facc15;border-radius:99px;padding:2px 7px;font-size:12px;margin-right:5px}
+.msg{height:18px;text-align:right;color:#facc15;font-size:13px;margin-top:5px}
+.small{font-size:12px;color:#94a3b8;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="shell">
+    <div class="top">
+      <div class="brand">HP계산</div>
+      <div class="ver">V7</div>
+    </div>
+
+    <div class="tabs">
+      <button id="tabChg" class="tab active" onclick="showTab('chg')">%CHG</button>
+      <button id="tabTotl" class="tab" onclick="showTab('totl')">%TOTL</button>
+    </div>
+
+    <div id="panelChg" class="panel active">
+      <div class="card">
+        <div class="title">%CHG 증감률</div>
+        <div class="label">1. 이전값</div>
+        <input id="old" inputmode="decimal" autocomplete="off" placeholder="0">
+        <div class="label">2. 현재값</div>
+        <input id="now" inputmode="decimal" autocomplete="off" placeholder="0">
+        <div class="label">3. %CHG</div>
+        <input id="chg" inputmode="decimal" autocomplete="off" placeholder="0">
+        <div id="chgResult" class="result"></div>
+        <div id="chgMsg" class="msg"></div>
+        <div class="btnrow">
+          <button class="copy" onclick="copyResult('chgResult','chgMsg')">복사</button>
+          <button class="next" onclick="focusFirstEmpty('chg')">다음칸</button>
+          <button class="clear" onclick="clearChg()">지우기</button>
+        </div>
+        <div class="help">3칸 중 2칸만 입력하면 나머지 1칸을 계산합니다.<br>예: 이전값 100 + %CHG 35 → 현재값 135</div>
+      </div>
+    </div>
+
+    <div id="panelTotl" class="panel">
+      <div class="card">
+        <div class="title">%TOTL 전체 대비 비율</div>
+        <div class="label">1. 부분</div>
+        <input id="part" inputmode="decimal" autocomplete="off" placeholder="0">
+        <div class="label">2. 전체</div>
+        <input id="total" inputmode="decimal" autocomplete="off" placeholder="0">
+        <div class="label">3. %TOTL</div>
+        <input id="totp" inputmode="decimal" autocomplete="off" placeholder="0">
+        <div id="totlResult" class="result"></div>
+        <div id="totlMsg" class="msg"></div>
+        <div class="btnrow">
+          <button class="copy" onclick="copyResult('totlResult','totlMsg')">복사</button>
+          <button class="next" onclick="focusFirstEmpty('totl')">다음칸</button>
+          <button class="clear" onclick="clearTotl()">지우기</button>
+        </div>
+        <div class="help">3칸 중 2칸만 입력하면 나머지 1칸을 계산합니다.<br>예: 부분 20 + %TOTL 20 → 전체 100</div>
+      </div>
+    </div>
+
+    <div class="history">
+      <div class="hhead"><b>계산 기록</b><button class="hclear" onclick="clearHistory()">기록 지우기</button></div>
+      <div id="history"></div>
+      <div class="small">최근 20개가 이 기기에 저장됩니다.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ids=["old","now","chg","part","total","totp"];
+const E={}; ids.forEach(id=>E[id]=document.getElementById(id));
+let silent=false;
+const KEY="hpcalc_v7_history";
+
+function showTab(t){
+  panelChg.classList.toggle("active",t==="chg");
+  panelTotl.classList.toggle("active",t==="totl");
+  tabChg.classList.toggle("active",t==="chg");
+  tabTotl.classList.toggle("active",t==="totl");
+  setTimeout(()=>{(t==="chg"?E.old:E.part).focus();},50);
+}
+function clean(v){return String(v||"").replace(/,/g,"").trim();}
+function value(v){let x=clean(v); if(x===""||x==="-"||x==="."||x==="-.")return NaN; return Number(x);}
+function fmt(x){
+  if(!isFinite(x))return "";
+  let s=Number(x).toFixed(2).replace(/\.00$/,"");
+  let p=s.split(".");
+  p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,",");
+  return p.join(".");
+}
+function pct(x){return isFinite(x)?Number(x).toFixed(2).replace(/\.00$/,"")+"%":"";}
+function setv(id,x){silent=true;E[id].value=fmt(x);silent=false;}
+function formatInput(el){
+  let x=clean(el.value);
+  if(x===""||x==="-"||x==="."||x==="-.")return;
+  if(isNaN(Number(x)))return;
+  let p=x.split(".");
+  p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,",");
+  el.value=p.join(".");
+}
+ids.forEach(id=>{
+  E[id].addEventListener("input",()=>{if(silent)return;formatInput(E[id]);calc(id);});
+  E[id].addEventListener("keydown",ev=>{
+    if(ev.key==="Enter"){
+      ev.preventDefault();
+      const group=["old","now","chg"].includes(id)?["old","now","chg"]:["part","total","totp"];
+      const next=group[(group.indexOf(id)+1)%group.length];
+      E[next].focus();E[next].select();
+    }
+  });
+});
+function calc(id){["old","now","chg"].includes(id)?calcChg(id):calcTotl(id);}
+function calcChg(id){
+  let o=value(E.old.value), n=value(E.now.value), c=value(E.chg.value), text="";
+  if(id==="chg"){
+    if(!isNaN(o)&&!isNaN(c)){let r=o*(1+c/100);setv("now",r);text=`이전값 ${fmt(o)} 에서 ${pct(c)} 변화 → 현재값 ${fmt(r)}`;}
+    else if(!isNaN(n)&&!isNaN(c)&&(1+c/100)!==0){let r=n/(1+c/100);setv("old",r);text=`현재값 ${fmt(n)}, ${pct(c)} 기준 → 이전값 ${fmt(r)}`;}
+  }else{
+    if(!isNaN(o)&&!isNaN(n)&&o!==0){let r=(n-o)/o*100;setv("chg",r);text=`${fmt(o)} → ${fmt(n)} = ${pct(r)}`;}
+    else if(!isNaN(o)&&!isNaN(c)){let r=o*(1+c/100);setv("now",r);text=`이전값 ${fmt(o)} 에서 ${pct(c)} 변화 → 현재값 ${fmt(r)}`;}
+    else if(!isNaN(n)&&!isNaN(c)&&(1+c/100)!==0){let r=n/(1+c/100);setv("old",r);text=`현재값 ${fmt(n)}, ${pct(c)} 기준 → 이전값 ${fmt(r)}`;}
+  }
+  chgResult.textContent=text; if(text)addHistory("CHG",text);
+}
+function calcTotl(id){
+  let p=value(E.part.value), t=value(E.total.value), r=value(E.totp.value), text="";
+  if(id==="totp"){
+    if(!isNaN(p)&&!isNaN(r)&&r!==0){let x=p/(r/100);setv("total",x);text=`부분 ${fmt(p)} 이 ${pct(r)} → 전체 ${fmt(x)}`;}
+    else if(!isNaN(t)&&!isNaN(r)){let x=t*(r/100);setv("part",x);text=`전체 ${fmt(t)} 의 ${pct(r)} → 부분 ${fmt(x)}`;}
+  }else{
+    if(!isNaN(p)&&!isNaN(t)&&t!==0){let x=p/t*100;setv("totp",x);text=`부분 ${fmt(p)} / 전체 ${fmt(t)} = ${pct(x)}`;}
+    else if(!isNaN(p)&&!isNaN(r)&&r!==0){let x=p/(r/100);setv("total",x);text=`부분 ${fmt(p)} 이 ${pct(r)} → 전체 ${fmt(x)}`;}
+    else if(!isNaN(t)&&!isNaN(r)){let x=t*(r/100);setv("part",x);text=`전체 ${fmt(t)} 의 ${pct(r)} → 부분 ${fmt(x)}`;}
+  }
+  totlResult.textContent=text; if(text)addHistory("TOTL",text);
+}
+function clearChg(){["old","now","chg"].forEach(id=>E[id].value="");chgResult.textContent="";chgMsg.textContent="";E.old.focus();}
+function clearTotl(){["part","total","totp"].forEach(id=>E[id].value="");totlResult.textContent="";totlMsg.textContent="";E.part.focus();}
+function focusFirstEmpty(type){const g=type==="chg"?["old","now","chg"]:["part","total","totp"];const target=g.find(id=>clean(E[id].value)==="")||g[0];E[target].focus();E[target].select();}
+function copyResult(rid,mid){
+  const text=document.getElementById(rid).textContent;
+  if(!text)return;
+  navigator.clipboard.writeText(text).then(()=>{let m=document.getElementById(mid);m.textContent="복사 완료";setTimeout(()=>m.textContent="",1200);});
+}
+function addHistory(type,text){
+  let arr=[];try{arr=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(e){}
+  if(arr.length&&arr[0].text===text)return;
+  arr.unshift({type,text,time:new Date().toLocaleString("ko-KR")});
+  arr=arr.slice(0,20);localStorage.setItem(KEY,JSON.stringify(arr));renderHistory();
+}
+function renderHistory(){
+  let arr=[];try{arr=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(e){}
+  history.innerHTML=arr.length?arr.map(x=>`<div class="item"><span class="badge">${x.type}</span>${x.text}<br><small>${x.time}</small></div>`).join(""):`<div class="item">아직 기록이 없습니다.</div>`;
+}
+function clearHistory(){localStorage.removeItem(KEY);renderHistory();}
+renderHistory();
+</script>
+</body>
+</html>
